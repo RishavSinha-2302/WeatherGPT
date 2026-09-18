@@ -1,0 +1,17 @@
+[project]
+name = "weathergpt"
+version = "0.1.0"
+description = "WeatherGPT - Conversational NWP AI with Multilingual Voice"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+    "google-generativeai>=0.8.0",
+    "supabase>=2.8.0",
+    "paho-mqtt>=2.1.0",
+    "python-dotenv>=1.0.1",
+    "pydantic>=2.8.0",
+    "google-genai>=2.23.0",
+]
