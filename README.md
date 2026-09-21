@@ -57,44 +57,42 @@ Built using a strictly ₹0 budget, high-performance stack:
 
 ## 🚀 Quick Start Guide (Using `uv`)
 
-Because this is a `uv` project without Node.js or npm, all dependencies and execution run through `uv`:
+This project uses [`uv`](https://docs.astral.sh/uv/) for fast, zero-configuration Python environment and package management without requiring Node.js or npm.
 
-### 1. Clone and Install Python Dependencies
+### 1. Install `uv` (if not already installed)
+- **Windows (PowerShell)**:
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
+- **macOS / Linux**:
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+- **Or via pip**:
+  ```bash
+  pip install uv
+  ```
+
+### 2. Clone the Repository
 ```bash
-# Sync all dependencies into .venv
+git clone https://github.com/RishavSinha-2302/WeatherGPT.git
+cd WeatherGPT
+```
+
+### 3. Install Project Dependencies
+Sync all dependencies into the virtual environment:
+```bash
 uv sync
 ```
 
-### 2. Configure Environment Variables (Optional)
-Copy `.env.example` to `.env`:
+### 4. Launch the Application
+Start the FastAPI server:
 ```bash
-cp .env.example .env
+uv run main.py
 ```
-Fill in your LLM credentials (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, and `OPENAI_MODEL` e.g. `gpt-4o-mini`, `deepseek-chat`, or local Ollama) along with your `SUPABASE_URL` and `SUPABASE_KEY`.
-*(Note: WeatherGPT contains a smart standalone fallback router and local spatial index, so you can run and test the application immediately even before adding your keys!)*
+*(Alternatively: `uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000`)*
 
-### 3. Initialize Supabase PostGIS Database (Optional)
-Open the Supabase SQL Editor and run the script in [`schema.sql`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/schema.sql):
-- Enables PostGIS: `CREATE EXTENSION IF NOT EXISTS postgis;`
-- Creates `users` and `alerts` tables with spatial GIST indexes.
-- Deploys the `check_location_alerts` RPC function.
-- Injects initial warning polygons over Maharashtra (Pune & Vidarbha test zones).
-
-### 4. Launch the FastAPI Web Application
-```bash
-uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
 Open your browser at **[http://localhost:8000](http://localhost:8000)**.
-
-### 5. Run the WMO WIS 2.0 MQTT Background Listener
-In a separate terminal:
-```bash
-# Start continuous listener
-uv run python mqtt_listener.py
-
-# Or trigger an immediate simulated severe weather alert ingestion
-uv run python mqtt_listener.py --simulate
-```
 
 ---
 
@@ -119,14 +117,13 @@ uv run python mqtt_listener.py --simulate
 
 | File | Description |
 |---|---|
-| [`main.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/main.py) | FastAPI server hosting `/api/chat`, `/api/weather/quick`, `/api/health`, and static files |
-| [`agent.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/agent.py) | OpenAI-compatible agent router with Tool/Function Calling and multilingual synthesis |
-| [`tools.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/tools.py) | Async tools for Open-Meteo current NWP, 7-day agricultural forecast, and PostGIS alerts |
-| [`mqtt_listener.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/mqtt_listener.py) | WMO WIS 2.0 MQTT worker ingesting hazard bounding boxes into Supabase PostGIS |
-| [`schema.sql`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/schema.sql) | SQL initialization script for Supabase with PostGIS spatial geometry and RPC functions |
-| [`static/index.html`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/static/index.html) | Modern HTML5 PWA host page with Tailwind CSS and Lucide Icons via CDN |
-| [`static/app.jsx`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/static/app.jsx) | WhatsApp-style React chat app with HTML5 Web Speech STT/TTS and Geolocation |
-| [`pyproject.toml`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/pyproject.toml) | UV project specification with Python 3.11+ dependencies |
+| `main.py` | FastAPI server hosting `/api/chat`, `/api/weather/quick`, `/api/health`, and static files |
+| `agent.py` | OpenAI-compatible agent router with Tool/Function Calling and multilingual synthesis |
+| `tools.py` | Async tools for Open-Meteo current NWP, 7-day agricultural forecast, and PostGIS alerts |
+| `mqtt_listener.py` | WMO WIS 2.0 MQTT worker ingesting hazard bounding boxes into Supabase PostGIS |
+| `schema.sql` | SQL initialization script for Supabase with PostGIS spatial geometry and RPC functions |
+| `static/index.html` | Modern HTML5 PWA host page with Tailwind CSS and Lucide Icons via CDN |
+| `static/app.jsx` | WhatsApp-style React chat app with HTML5 Web Speech STT/TTS and Geolocation |
+| `pyproject.toml` | UV project specification with Python 3.11+ dependencies |
 
 ---
-*WeatherGPT MVP - Developed with Antigravity*
