@@ -5,7 +5,7 @@
 Built using a strictly ₹0 budget, high-performance stack:
 - **Zero Node/npm Dependency**: The full responsive React 18 + Tailwind CSS UI is served directly through FastAPI via CDN.
 - **Python Backend**: Fast asynchronous FastAPI server managed via `uv`.
-- **AI Router**: Google Gemini 1.5 Flash using Function / Tool Calling.
+- **AI Router**: OpenAI-compatible LLM router using Function / Tool Calling (supports OpenAI, OpenRouter, Groq, Ollama, DeepSeek, vLLM, etc.).
 - **NWP Engine**: Open-Meteo API serving free GFS/ECMWF numerical weather models and 7-day agricultural soil moisture / precipitation forecasts.
 - **Spatial Database**: Supabase PostgreSQL with PostGIS extension for polygon warning intersection.
 - **Alert Ingestion**: `paho-mqtt` background worker listening to WMO WIS 2.0 real-time hazard broker.
@@ -33,8 +33,8 @@ Built using a strictly ₹0 budget, high-performance stack:
                                                       |
                                                       v
                                   +---------------------------------------+
-                                  |         Gemini 1.5 Flash Router       |
-                                  |         (google-genai SDK Tools)      |
+                                  |     OpenAI-Compatible LLM Router      |
+                                  |       (Function / Tool Calling)       |
                                   +----+--------------------+--------+----+
                                        |                    |        |
              +-------------------------+                    |        +-------------------------+
@@ -70,7 +70,7 @@ Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Fill in your `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/) and your `SUPABASE_URL` and `SUPABASE_KEY`.
+Fill in your LLM credentials (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`, and `OPENAI_MODEL` e.g. `gpt-4o-mini`, `deepseek-chat`, or local Ollama) along with your `SUPABASE_URL` and `SUPABASE_KEY`.
 *(Note: WeatherGPT contains a smart standalone fallback router and local spatial index, so you can run and test the application immediately even before adding your keys!)*
 
 ### 3. Initialize Supabase PostGIS Database (Optional)
@@ -120,7 +120,7 @@ uv run python mqtt_listener.py --simulate
 | File | Description |
 |---|---|
 | [`main.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/main.py) | FastAPI server hosting `/api/chat`, `/api/weather/quick`, `/api/health`, and static files |
-| [`agent.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/agent.py) | Gemini 1.5 Flash agent router with Tool/Function Calling and multilingual synthesis |
+| [`agent.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/agent.py) | OpenAI-compatible agent router with Tool/Function Calling and multilingual synthesis |
 | [`tools.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/tools.py) | Async tools for Open-Meteo current NWP, 7-day agricultural forecast, and PostGIS alerts |
 | [`mqtt_listener.py`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/mqtt_listener.py) | WMO WIS 2.0 MQTT worker ingesting hazard bounding boxes into Supabase PostGIS |
 | [`schema.sql`](file:///c:/Users/risha/Desktop/Projects/WeatherGPT/schema.sql) | SQL initialization script for Supabase with PostGIS spatial geometry and RPC functions |

@@ -60,7 +60,7 @@ async def chat_endpoint(payload: ChatRequest):
     """
     Main conversational endpoint:
     Accepts user message, coordinates, and language preference,
-    routes to Gemini 1.5 Flash tool-calling router, and returns translated advice.
+    routes to OpenAI-compatible tool-calling router, and returns translated advice.
     """
     if not payload.message or not payload.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
@@ -101,9 +101,10 @@ async def health_check():
         "status": "healthy",
         "service": "WeatherGPT",
         "version": "1.0.0",
-        "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
+        "llm_configured": bool(os.getenv("OPENAI_API_KEY") or os.getenv("LLM_API_KEY")),
+        "model": os.getenv("OPENAI_MODEL") or os.getenv("MODEL_NAME") or "gpt-4o-mini",
         "supabase_configured": bool(os.getenv("SUPABASE_URL") and os.getenv("SUPABASE_KEY")),
-        "stack": "FastAPI + Open-Meteo + PostGIS + Gemini 1.5 Flash"
+        "stack": "FastAPI + Open-Meteo + PostGIS + OpenAI-Compatible LLM"
     }
 
 

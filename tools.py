@@ -131,61 +131,65 @@ async def get_agricultural_forecast(lat: float, lon: float) -> Dict[str, Any]:
 
 async def check_location_alerts(lat: float, lon: float) -> Dict[str, Any]:
     """
-    Queries Supabase PostGIS spatial database to check if the provided coordinate
-    intersects with any active severe weather warning polygons (WIS 2.0 / IMD alerts).
+    Fetches real-time weather and severe hazard alerts for given geographic coordinates
+    from WeatherAPI alerts endpoint (https://api.weatherapi.com/v1/alerts.json).
     
     Args:
         lat: Latitude of user location
         lon: Longitude of user location
         
     Returns:
-        dict: List of active hazard alerts (severity, description, valid until, source).
+        dict: Real-time active hazard alerts (severity, event, description, valid until, source).
     """
-    if supabase_client:
-        try:
-            # Call PostGIS RPC procedure
-            response = supabase_client.rpc(
-                "check_location_alerts",
-                {"p_lat": lat, "p_lon": lon}
-            ).execute()
-            
-            alerts = response.data if response and hasattr(response, 'data') else []
+    api_key = os.getenv("WEATHERAPI_API_KEY", "").strip()
+    if not api_key:
+        logger.warning("WEATHERAPI_API_KEY not configured in .env")
+        return {
+            "latitude": lat,
+            "longitude": lon,
+            "active_alerts_count": 0,
+            "alerts": [],
+            "status": "no_key"
+        }
+
+    url = f"https://api.weatherapi.com/v1/alerts.json?key={api_key}&q={lat},{lon}"
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+            raw_alerts = data.get("alerts", {}).get("alert", [])
+            alerts = []
+            for item in raw_alerts:
+                desc = item.get("headline") or item.get("event") or item.get("desc") or "Weather Alert"
+                if item.get("instruction"):
+                    desc = f"{desc}. Instruction: {item.get('instruction')}"
+                alerts.append({
+                    "severity": (item.get("severity") or "warning").lower(),
+                    "event": item.get("event", ""),
+                    "headline": item.get("headline", ""),
+                    "description": desc,
+                    "active_until": item.get("expires") or item.get("effective") or "Ongoing",
+                    "instruction": item.get("instruction", ""),
+                    "source": "WeatherAPI Alerts"
+                })
+
             return {
                 "latitude": lat,
                 "longitude": lon,
+                "location": data.get("location", {}).get("name", ""),
+                "region": data.get("location", {}).get("region", ""),
                 "active_alerts_count": len(alerts),
                 "alerts": alerts,
                 "status": "success"
             }
-        except Exception as e:
-            logger.warning(f"Supabase RPC query failed ({e}). Checking local/fallback alerts.")
-
-    # Graceful fallback when Supabase is not connected or RPC is not yet registered
-    # Tests whether coordinates lie roughly within sample test polygon (Pune region: 18.40-18.70 N, 73.70-74.10 E)
-    in_pune_box = (18.40 <= lat <= 18.70) and (73.70 <= lon <= 74.10)
-    in_vidarbha_box = (21.00 <= lat <= 21.40) and (78.90 <= lon <= 79.40)
-    
-    fallback_alerts: List[Dict[str, Any]] = []
-    if in_pune_box:
-        fallback_alerts.append({
-            "severity": "severe",
-            "description": "Orange Alert: Thunderstorms with heavy surface winds (40-50 km/h) and localized waterlogging expected in Pune district.",
-            "active_until": "Next 48 Hours",
-            "source": "IMD / WIS 2.0 Ingestion"
-        })
-    elif in_vidarbha_box:
-        fallback_alerts.append({
-            "severity": "warning",
-            "description": "High Evapotranspiration Advisory: Ensure mulching and micro-irrigation for cotton and soybean crops.",
-            "active_until": "Next 72 Hours",
-            "source": "Agro-Met Advisory / WIS 2.0"
-        })
-        
-    return {
-        "latitude": lat,
-        "longitude": lon,
-        "active_alerts_count": len(fallback_alerts),
-        "alerts": fallback_alerts,
-        "status": "success (local spatial index)",
-        "note": "Supabase credentials not configured or RPC unavailable; evaluated against active regional alert zones."
-    }
+    except Exception as e:
+        logger.error(f"Error fetching alerts from WeatherAPI: {e}")
+        return {
+            "latitude": lat,
+            "longitude": lon,
+            "active_alerts_count": 0,
+            "alerts": [],
+            "status": "failed",
+            "error": str(e)
+        }
